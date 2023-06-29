@@ -1,19 +1,64 @@
 import * as core from '@actions/core'
-import {wait} from './wait'
+import * as github from '@actions/github'
+import { run } from './run'
 
-async function run(): Promise<void> {
+function mustGetInputOrEnv(inputName: string, envVar: string): string {
+  const val = getInput(inputName, {required: false})
+  if (val !== '') {
+    return val
+  }
+  const env = process.env[envVar]
+  if (env === undefined) {
+    throw Error(`Neither input: ${inputName} nor env var ${envVar} are defined`)
+  }
+  return env
+}
+
+function getInput(
+  name: string,
+  options?: core.InputOptions,
+  defaultValue?: string
+): string {
   try {
-    const ms: string = core.getInput('milliseconds')
-    core.debug(`Waiting ${ms} milliseconds ...`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
-
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
-
-    core.setOutput('time', new Date().toTimeString())
-  } catch (error) {
-    if (error instanceof Error) core.setFailed(error.message)
+    return core.getInput(name, options)
+  } catch (ex) {
+    if (defaultValue) {
+      return defaultValue
+    }
+    throw ex
   }
 }
 
-run()
+async function main(): Promise<void> {
+  const {
+    repo: {owner, repo}
+  } = github.context
+  const lastSuccessfulRun = getInput('last-successful-run-id', {
+    required: false
+  })
+  try {
+    await run({
+      owner,
+      repo,
+      githubToken: mustGetInputOrEnv('access-token', 'GITHUB_TOKEN'),
+      workflowID: Number(
+        mustGetInputOrEnv('workflow-run-id', 'GITHUB_RUN_ID')
+      ),
+      tag: getInput(
+        'tag',
+        {required: true},
+        ""
+      ),
+      dryRun: false,
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      core.error(
+        error.stack ? `${error.message}:\n${error.stack}` : error.message
+      )
+      core.setFailed(error.message)
+    }
+  }
+}
+
+main()

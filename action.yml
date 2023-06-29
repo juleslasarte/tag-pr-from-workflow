@@ -2,10 +2,20 @@ name: 'Your name here'
 description: 'Provide a description here'
 author: 'Your name or organization here'
 inputs:
-  milliseconds: # change this
+  workflow-run-id:
+    type: string
+    description: The workflow run ID to start the search for workflows from. Defaults to the current workflow run.
+    required: false
+    default: ${{ github.run_id }}
+  access-token:
+    description: 'Your GitHub Access Token, defaults to: {{ github.token }}'
+    default: ${{ github.token }}
+    required: false
+  tag:
+    type: string
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+    descroption: 'tag the PRs with this tag'
+    default: 'deployed'
 runs:
   using: 'node16'
   main: 'dist/index.js'
