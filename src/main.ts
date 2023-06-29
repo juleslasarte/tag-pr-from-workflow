@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { run } from './run'
+import {run} from './run'
 
 function mustGetInputOrEnv(inputName: string, envVar: string): string {
   const val = getInput(inputName, {required: false})
@@ -33,23 +33,14 @@ async function main(): Promise<void> {
   const {
     repo: {owner, repo}
   } = github.context
-  const lastSuccessfulRun = getInput('last-successful-run-id', {
-    required: false
-  })
   try {
     await run({
       owner,
       repo,
       githubToken: mustGetInputOrEnv('access-token', 'GITHUB_TOKEN'),
-      workflowID: Number(
-        mustGetInputOrEnv('workflow-run-id', 'GITHUB_RUN_ID')
-      ),
-      tag: getInput(
-        'tag',
-        {required: true},
-        ""
-      ),
-      dryRun: false,
+      workflowID: Number(mustGetInputOrEnv('workflow-run-id', 'GITHUB_RUN_ID')),
+      tag: getInput('tag', {required: true}, ''),
+      dryRun: false
     })
   } catch (error) {
     if (error instanceof Error) {
