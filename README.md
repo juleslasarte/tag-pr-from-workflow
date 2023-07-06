@@ -30,10 +30,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           workflow-id: ${{ github.event.workflow_run.id }}
-          tag: "automated-tag"
+          tag: 'automated-tag'
           dry-run: false
           paths: |
-            "src/*"
+            "src/*, "src/etc"
 ```
 
 This action runs whenever a workflow run completes. It checks the associated pull request(s) for the specified commit and updates the pull request(s) by adding the provided tag. The `github-token` input is required and should be provided as the `GITHUB_TOKEN` secret.
@@ -44,7 +44,7 @@ This action runs whenever a workflow run completes. It checks the associated pul
 - `workflow-id` (required): The ID of the workflow run. It can be accessed using `${{ github.event.workflow_run.id }}`.
 - `tag` (required): The tag to be added to the pull request(s).
 - `dry-run` (optional): If set to `true`, the action will only simulate the tag update without actually modifying the pull request(s). Default is `false`.
-- `paths` (optional): A newline-separated list of paths used to filter the commits and pull requests. Only the pull requests associated with commits that touch any of the specified paths will be updated with the tag.
+- `paths` (optional): A comma list of paths used to filter the commits and pull requests. Only the pull requests associated with commits that touch any of the specified paths will be updated with the tag.
 
 ## License
 

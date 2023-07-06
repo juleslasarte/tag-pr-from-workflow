@@ -18,7 +18,7 @@ inputs:
     default: 'deployed'
   paths:
     description: |-
-      newline-separated list of paths to check for when filtering the commits
+      comma list of paths to check for when filtering the commits
     required: false
 runs:
   using: 'node16'
