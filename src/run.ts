@@ -72,9 +72,11 @@ export async function run(opts: RunOpts): Promise<void> {
     )
 
     let lastCommit = ''
+    let previouslyCompletedWorkflowRun = 0
     if (previouslyCompleted.length > 0) {
       const [first] = previouslyCompleted
       lastCommit = first.head_sha
+      previouslyCompletedWorkflowRun = first.id
       core.info(
         `Last successfully completed workflow run: ${first.id} for commit: ${lastCommit}`
       )
@@ -89,7 +91,7 @@ export async function run(opts: RunOpts): Promise<void> {
     })
 
     core.info(
-      `Found ${commits.data.commits.length} in between run prev and current -- filtering based on paths ${paths}`
+      `Found ${commits.data.commits.length} commmits in between run ${previouslyCompletedWorkflowRun} and ${workflowID}} -- filtering based on paths ${paths}`
     )
     const filteredCommits: string[] = []
     // Filter commits based on paths
@@ -159,13 +161,15 @@ async function updatePullRequestLabels(
     })
     if (updatedPullRequest.status === 200) {
       core.info(
-        `Successfully tagged pull request ${pullRequest.url} with ${tag}`
+        `Successfully tagged pull request https://github.com/${owner}/${repo}/pull/${pullRequest.number} with ${tag}`
       )
     } else {
       // Handle the case when the update request was not successful
       core.warning('Failed to update pull request with the new tag')
     }
   } else {
-    core.info(`Dry run: tagged pull request ${pullRequest.url} with ${tag}`)
+    core.info(
+      `Dry run: tagged pull request https://github.com/${owner}/${repo}/pull/${pullRequest.number} with ${tag}`
+    )
   }
 }

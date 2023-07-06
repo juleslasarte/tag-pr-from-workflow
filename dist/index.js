@@ -180,9 +180,11 @@ function run(opts) {
             // Filter out workflow runs that are marked as complete
             const previouslyCompleted = completed.data.workflow_runs.filter(w => w.id !== workflowID);
             let lastCommit = '';
+            let previouslyCompletedWorkflowRun = 0;
             if (previouslyCompleted.length > 0) {
                 const [first] = previouslyCompleted;
                 lastCommit = first.head_sha;
+                previouslyCompletedWorkflowRun = first.id;
                 core.info(`Last successfully completed workflow run: ${first.id} for commit: ${lastCommit}`);
             }
             // Fetch comparison between commits
@@ -192,7 +194,7 @@ function run(opts) {
                 base: lastCommit,
                 head: workflow.head_commit.id
             });
-            core.info(`Found ${commits.data.commits.length} in between run prev and current -- filtering based on paths ${paths}`);
+            core.info(`Found ${commits.data.commits.length} commmits in between run ${previouslyCompletedWorkflowRun} and ${workflowID}} -- filtering based on paths ${paths}`);
             const filteredCommits = [];
             // Filter commits based on paths
             if (opts.paths.length > 0) {
@@ -244,7 +246,7 @@ function updatePullRequestLabels(octokit, owner, repo, pullRequest, tag, dryRun)
                 labels: updatedLabels
             });
             if (updatedPullRequest.status === 200) {
-                core.info(`Successfully tagged pull request ${pullRequest.url} with ${tag}`);
+                core.info(`Successfully tagged pull request https://github.com/${owner}/${repo}/pull/${pullRequest.number} with ${tag}`);
             }
             else {
                 // Handle the case when the update request was not successful
@@ -252,7 +254,7 @@ function updatePullRequestLabels(octokit, owner, repo, pullRequest, tag, dryRun)
             }
         }
         else {
-            core.info(`Dry run: tagged pull request ${pullRequest.url} with ${tag}`);
+            core.info(`Dry run: tagged pull request https://github.com/${owner}/${repo}/pull/${pullRequest.number} with ${tag}`);
         }
     });
 }
