@@ -19,7 +19,7 @@ inputs:
   paths:
     secrets:
     description: |-
-      Comma-separated or newline-separated list of paths to check for when filtering the commits
+      newline-separated list of paths to check for when filtering the commits
     required: false
 runs:
   using: 'node16'
