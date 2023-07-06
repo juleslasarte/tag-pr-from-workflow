@@ -91,21 +91,22 @@ export async function run(opts: RunOpts): Promise<void> {
     core.info(
       `Found ${commits.data.commits.length} in between run prev and current -- filtering based on paths ${paths}`
     )
-
-    // Filter commits based on paths
     const filteredCommits: string[] = []
-    for (const commitSha of commits.data.commits) {
-      const commit = await octokit.rest.repos.getCommit({
-        owner,
-        repo,
-        ref: commitSha.sha
-      })
-      if (commit.data.files) {
-        const commitFiles = commit.data.files.map(file => file.filename)
-        for (const path of paths) {
-          if (commitFiles.some(file => minimatch(file, path))) {
-            filteredCommits.push(commitSha.sha)
-            break
+    // Filter commits based on paths
+    if (opts.paths.length > 0) {
+      for (const commitSha of commits.data.commits) {
+        const commit = await octokit.rest.repos.getCommit({
+          owner,
+          repo,
+          ref: commitSha.sha
+        })
+        if (commit.data.files) {
+          const commitFiles = commit.data.files.map(file => file.filename)
+          for (const path of paths) {
+            if (commitFiles.some(file => minimatch(file, path))) {
+              filteredCommits.push(commitSha.sha)
+              break
+            }
           }
         }
       }

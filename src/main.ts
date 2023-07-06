@@ -49,7 +49,7 @@ async function main(): Promise<void> {
       tag: getInput('tag', {required: true}, ''),
       dryRun: false,
       paths: parseNewlineSeparatedStrings(
-        getInput('paths', {required: true}, '')
+        getInput('paths', {required: false}, '')
       )
     })
   } catch (error) {
