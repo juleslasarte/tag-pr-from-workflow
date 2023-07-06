@@ -11,15 +11,22 @@ const mockedCore = core as jest.Mocked<typeof core>
 jest.mock('@actions/github')
 const mockedGithub = github as jest.Mocked<typeof github>
 
+jest.mock('minimatch', () => ({
+  minimatch: jest.fn().mockReturnValue(true)
+}))
+
 // Mocking the octokit object
 const mockedOctokit = {
   rest: {
     repos: {
       get: jest.fn(),
-      listPullRequestsAssociatedWithCommit: jest.fn()
+      listPullRequestsAssociatedWithCommit: jest.fn(),
+      compareCommits: jest.fn(),
+      getCommit: jest.fn()
     },
     actions: {
-      getWorkflowRun: jest.fn()
+      getWorkflowRun: jest.fn(),
+      listWorkflowRuns: jest.fn()
     },
     issues: {
       update: jest.fn()
@@ -35,7 +42,8 @@ describe('run', () => {
     githubToken: 'your-token',
     workflowID: 1234,
     tag: 'your-tag',
-    dryRun: false
+    dryRun: false,
+    paths: ['path/to/your/file']
   }
 
   beforeEach(() => {
@@ -54,7 +62,8 @@ describe('run', () => {
     const workflow = {
       head_commit: {
         id: 'commit-id'
-      }
+      },
+      workflow_id: 1234
     }
     mockedOctokit.rest.actions.getWorkflowRun.mockResolvedValue({
       data: workflow
@@ -83,6 +92,46 @@ describe('run', () => {
       data: mockedPullRequestData
     })
 
+    const completedWorkflowRuns = {
+      data: {
+        workflow_runs: [
+          {
+            id: 12345,
+            head_sha: 'last-commit-id'
+          },
+          {
+            id: 12346,
+            head_sha: 'last-commit-id'
+          }
+        ]
+      }
+    }
+    mockedOctokit.rest.actions.listWorkflowRuns.mockResolvedValue(
+      completedWorkflowRuns
+    )
+
+    const commitsComparison = {
+      data: {
+        commits: [
+          {
+            sha: 'commit-id'
+          }
+        ]
+      }
+    }
+    mockedOctokit.rest.repos.compareCommits.mockResolvedValue(commitsComparison)
+
+    const commitFiles = {
+      data: {
+        files: [
+          {
+            filename: 'path/to/your/file'
+          }
+        ]
+      }
+    }
+    mockedOctokit.rest.repos.getCommit.mockResolvedValue(commitFiles)
+
     await run(opts)
 
     expect(mockedOctokit.rest.issues.update).toHaveBeenCalledWith({
@@ -95,6 +144,29 @@ describe('run', () => {
     expect(mockedCore.info).toHaveBeenCalledWith(
       `Successfully tagged pull request ${pullRequest.url} with ${opts.tag}`
     )
+
+    // Check that the correct methods were called to get the workflow runs, compare commits, and get commit
+    expect(mockedOctokit.rest.actions.listWorkflowRuns).toHaveBeenCalledWith({
+      owner: opts.owner,
+      repo: opts.repo,
+      workflow_id: String(workflow.workflow_id),
+      branch: 'main',
+      status: 'success',
+      per_page: 10
+    })
+
+    expect(mockedOctokit.rest.repos.compareCommits).toHaveBeenCalledWith({
+      owner: opts.owner,
+      repo: opts.repo,
+      base: 'last-commit-id',
+      head: workflow.head_commit.id
+    })
+
+    expect(mockedOctokit.rest.repos.getCommit).toHaveBeenCalledWith({
+      owner: opts.owner,
+      repo: opts.repo,
+      ref: 'commit-id'
+    })
   })
 
   test('should handle no pull request found for the commit', async () => {

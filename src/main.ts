@@ -29,6 +29,13 @@ function getInput(
   }
 }
 
+function parseNewlineSeparatedStrings(input: string): string[] {
+  if (input === '') {
+    return []
+  }
+  return input.split('\n').map(s => s.trim())
+}
+
 async function main(): Promise<void> {
   const {
     repo: {owner, repo}
@@ -40,7 +47,10 @@ async function main(): Promise<void> {
       githubToken: mustGetInputOrEnv('access-token', 'GITHUB_TOKEN'),
       workflowID: Number(mustGetInputOrEnv('workflow-run-id', 'GITHUB_RUN_ID')),
       tag: getInput('tag', {required: true}, ''),
-      dryRun: false
+      dryRun: false,
+      paths: parseNewlineSeparatedStrings(
+        getInput('paths', {required: true}, '')
+      )
     })
   } catch (error) {
     if (error instanceof Error) {

@@ -16,6 +16,11 @@ inputs:
     required: true
     descroption: 'tag the PRs with this tag'
     default: 'deployed'
+  paths:
+    secrets:
+    description: |-
+      Comma-separated or newline-separated list of paths to check for when filtering the commits
+    required: false
 runs:
   using: 'node16'
   main: 'dist/index.js'
