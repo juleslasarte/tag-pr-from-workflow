@@ -33,15 +33,7 @@ jobs:
           tag: "automated-tag"
           dry-run: false
           paths: |
-            backend/lib/cellular-control-plane/**
-            backend/config/central-accounts/**
-            backend/functions/cellular-control-plane/**
-            backend/lib/common/**
-            backend/config/pagerduty/**
-            backend/functions/common/**
-            backend/functions/go.*
-            backend/bin/**
-            backend/Makefile
+            "src/*"
 ```
 
 This action runs whenever a workflow run completes. It checks the associated pull request(s) for the specified commit and updates the pull request(s) by adding the provided tag. The `github-token` input is required and should be provided as the `GITHUB_TOKEN` secret.
