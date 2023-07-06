@@ -33,7 +33,7 @@ function parseNewlineSeparatedStrings(input: string): string[] {
   if (input === '') {
     return []
   }
-  return input.split('\n').map(s => s.trim())
+  return input.split(',').map(s => s.trim())
 }
 
 async function main(): Promise<void> {

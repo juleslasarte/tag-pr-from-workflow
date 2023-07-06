@@ -68,7 +68,7 @@ function parseNewlineSeparatedStrings(input) {
     if (input === '') {
         return [];
     }
-    return input.split('\n').map(s => s.trim());
+    return input.split(',').map(s => s.trim());
 }
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
