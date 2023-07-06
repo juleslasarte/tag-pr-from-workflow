@@ -14,10 +14,9 @@ inputs:
   tag:
     type: string
     required: true
-    descroption: 'tag the PRs with this tag'
+    description: 'tag the PRs with this tag'
     default: 'deployed'
   paths:
-    secrets:
     description: |-
       newline-separated list of paths to check for when filtering the commits
     required: false

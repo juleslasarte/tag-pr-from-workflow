@@ -81,7 +81,7 @@ function main() {
                 workflowID: Number(mustGetInputOrEnv('workflow-run-id', 'GITHUB_RUN_ID')),
                 tag: getInput('tag', { required: true }, ''),
                 dryRun: false,
-                paths: parseNewlineSeparatedStrings(getInput('paths', { required: true }, '')),
+                paths: parseNewlineSeparatedStrings(getInput('paths', { required: false }, ''))
             });
         }
         catch (error) {
@@ -193,63 +193,69 @@ function run(opts) {
                 head: workflow.head_commit.id
             });
             core.info(`Found ${commits.data.commits.length} in between run prev and current -- filtering based on paths ${paths}`);
+            const filteredCommits = [];
             // Filter commits based on paths
-            let filteredCommits = [];
-            for (const commitSha of commits.data.commits) {
-                const commit = yield octokit.rest.repos.getCommit({ owner, repo, ref: commitSha.sha });
-                if (commit.data.files) {
-                    const commitFiles = commit.data.files.map(file => file.filename);
-                    for (const path of paths) {
-                        if (commitFiles.some(file => (0, minimatch_1.minimatch)(file, path))) {
-                            filteredCommits.push(commitSha.sha);
-                            break;
+            if (opts.paths.length > 0) {
+                for (const commitSha of commits.data.commits) {
+                    const commit = yield octokit.rest.repos.getCommit({
+                        owner,
+                        repo,
+                        ref: commitSha.sha
+                    });
+                    if (commit.data.files) {
+                        const commitFiles = commit.data.files.map(file => file.filename);
+                        for (const path of paths) {
+                            if (commitFiles.some(file => (0, minimatch_1.minimatch)(file, path))) {
+                                filteredCommits.push(commitSha.sha);
+                                break;
+                            }
                         }
                     }
                 }
             }
             // Update labels for pull requests associated with the filtered commits
             for (const sha of filteredCommits) {
-                const response = yield octokit.rest.repos.listPullRequestsAssociatedWithCommit({
+                const listPRResponse = yield octokit.rest.repos.listPullRequestsAssociatedWithCommit({
                     owner,
                     repo,
                     commit_sha: sha
                 });
-                if (response.data.length > 0) {
+                if (listPRResponse.data.length > 0) {
                     // Update labels for the first pull request associated with the commit
-                    yield updatePullRequestLabels(octokit, owner, repo, response.data[0], tag, dryRun);
+                    yield updatePullRequestLabels(octokit, owner, repo, listPRResponse.data[0], tag, dryRun);
                 }
             }
-        }
-        // Function to update labels of a pull request
-        function updatePullRequestLabels(octokit, owner, repo, pullRequest, tag, dryRun) {
-            return __awaiter(this, void 0, void 0, function* () {
-                // Get the existing labels of the pull request
-                const currentLabels = pullRequest.labels.map(label => label.name);
-                // Add the new tag to the existing labels
-                const updatedLabels = [...currentLabels, tag];
-                if (!dryRun) {
-                    const updatedPullRequest = yield octokit.rest.issues.update({
-                        owner,
-                        repo,
-                        issue_number: pullRequest.number,
-                        labels: updatedLabels
-                    });
-                    if (updatedPullRequest.status === 200) {
-                        core.info(`Successfully tagged pull request ${pullRequest.url} with ${tag}`);
-                    }
-                    else {
-                        // Handle the case when the update request was not successful
-                        core.warning('Failed to update pull request with the new tag');
-                    }
-                }
-                else {
-                    core.info(`Dry run: tagged pull request ${pullRequest.url} with ${tag}`);
-                }
-            });
         }
     });
 }
 exports.run = run;
+// Function to update labels of a pull request
+function updatePullRequestLabels(octokit, owner, repo, pullRequest, tag, dryRun) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // Get the existing labels of the pull request
+        const currentLabels = pullRequest.labels.map(label => label.name);
+        // Add the new tag to the existing labels
+        const updatedLabels = [...currentLabels, tag];
+        if (!dryRun) {
+            const updatedPullRequest = yield octokit.rest.issues.update({
+                owner,
+                repo,
+                issue_number: pullRequest.number,
+                labels: updatedLabels
+            });
+            if (updatedPullRequest.status === 200) {
+                core.info(`Successfully tagged pull request ${pullRequest.url} with ${tag}`);
+            }
+            else {
+                // Handle the case when the update request was not successful
+                core.warning('Failed to update pull request with the new tag');
+            }
+        }
+        else {
+            core.info(`Dry run: tagged pull request ${pullRequest.url} with ${tag}`);
+        }
+    });
+}
 
 
 /***/ }),
