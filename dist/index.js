@@ -227,7 +227,7 @@ function run(opts) {
                 if (listPRResponse.data.length > 0) {
                     // Update labels for the first pull request associated with the commit
                     yield updatePullRequestLabels(octokit, owner, repo, listPRResponse.data[0], tag, dryRun);
-                    prs.push(response.data[0]);
+                    prs.push(listPRResponse.data[0]);
                 }
             }
         }

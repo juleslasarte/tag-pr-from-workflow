@@ -135,7 +135,7 @@ export async function run(opts: RunOpts): Promise<void> {
           tag,
           dryRun
         )
-        prs.push(response.data[0])
+        prs.push(listPRResponse.data[0])
       }
     }
   }
