@@ -47,7 +47,7 @@ async function main(): Promise<void> {
       githubToken: mustGetInputOrEnv('access-token', 'GITHUB_TOKEN'),
       workflowID: Number(mustGetInputOrEnv('workflow-run-id', 'GITHUB_RUN_ID')),
       tag: getInput('tag', {required: true}, ''),
-      dryRun: false,
+      dryRun: getInput('dry-run', {required: false}, '') === 'true',
       paths: parseNewlineSeparatedStrings(
         getInput('paths', {required: false}, '')
       )

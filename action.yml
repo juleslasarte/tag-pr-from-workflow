@@ -20,6 +20,12 @@ inputs:
     description: |-
       comma list of paths to check for when filtering the commits
     required: false
+  dry-run:
+    type: boolean
+    description: |-
+      if true, will not actually tag the PRs, just print the ones that would be tagged
+    required: false
+    default: false
 runs:
   using: 'node16'
   main: 'dist/index.js'

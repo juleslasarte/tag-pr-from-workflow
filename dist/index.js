@@ -80,7 +80,7 @@ function main() {
                 githubToken: mustGetInputOrEnv('access-token', 'GITHUB_TOKEN'),
                 workflowID: Number(mustGetInputOrEnv('workflow-run-id', 'GITHUB_RUN_ID')),
                 tag: getInput('tag', { required: true }, ''),
-                dryRun: false,
+                dryRun: getInput('dry-run', { required: false }, '') === 'true',
                 paths: parseNewlineSeparatedStrings(getInput('paths', { required: false }, ''))
             });
         }
@@ -140,9 +140,10 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const minimatch_1 = __nccwpck_require__(1953);
 function run(opts) {
-    var _a;
+    var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
         const { owner, repo, paths, githubToken, workflowID, tag, dryRun } = opts;
+        const prs = [];
         // Initialize octokit with the provided GitHub token
         const octokit = github.getOctokit(githubToken);
         // Fetch workflow run data
@@ -164,6 +165,7 @@ function run(opts) {
             if (response.data.length > 0) {
                 // Update labels for the first pull request associated with the commit
                 yield updatePullRequestLabels(octokit, owner, repo, response.data[0], tag, dryRun);
+                prs.push(response.data[0]);
             }
             else {
                 core.info(`No pull request found for commit ${workflow.head_commit.id}`);
@@ -225,9 +227,27 @@ function run(opts) {
                 if (listPRResponse.data.length > 0) {
                     // Update labels for the first pull request associated with the commit
                     yield updatePullRequestLabels(octokit, owner, repo, listPRResponse.data[0], tag, dryRun);
+                    prs.push(response.data[0]);
                 }
             }
         }
+        const rows = [];
+        for (const pr of prs) {
+            rows.push([
+                `https://github.com/${owner}/${repo}/pull/${pr.number}`,
+                (_c = (_b = pr.user) === null || _b === void 0 ? void 0 : _b.login) !== null && _c !== void 0 ? _c : ''
+            ]);
+        }
+        yield core.summary
+            .addHeading('PRs in this run :rocket:')
+            .addTable([
+            [
+                { data: 'PR', header: true },
+                { data: 'Author', header: true }
+            ],
+            ...rows
+        ])
+            .write();
     });
 }
 exports.run = run;

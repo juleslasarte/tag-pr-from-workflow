@@ -3,6 +3,7 @@ import * as github from '@actions/github'
 /* eslint-disable  import/no-unresolved */
 import {components} from '@octokit/openapi-types'
 import {minimatch} from 'minimatch'
+import {SummaryTableRow} from '@actions/core/lib/summary'
 
 export type workflowRunStatus = components['parameters']['workflow-run-status']
 
@@ -18,7 +19,7 @@ export interface RunOpts {
 
 export async function run(opts: RunOpts): Promise<void> {
   const {owner, repo, paths, githubToken, workflowID, tag, dryRun} = opts
-
+  const prs = []
   // Initialize octokit with the provided GitHub token
   const octokit = github.getOctokit(githubToken)
 
@@ -52,6 +53,7 @@ export async function run(opts: RunOpts): Promise<void> {
         tag,
         dryRun
       )
+      prs.push(response.data[0])
     } else {
       core.info(`No pull request found for commit ${workflow.head_commit.id}`)
     }
@@ -133,9 +135,29 @@ export async function run(opts: RunOpts): Promise<void> {
           tag,
           dryRun
         )
+        prs.push(response.data[0])
       }
     }
   }
+  const rows: SummaryTableRow[] = []
+
+  for (const pr of prs) {
+    rows.push([
+      `https://github.com/${owner}/${repo}/pull/${pr.number}`,
+      pr.user?.login ?? ''
+    ])
+  }
+
+  await core.summary
+    .addHeading('PRs in this run :rocket:')
+    .addTable([
+      [
+        {data: 'PR', header: true},
+        {data: 'Author', header: true}
+      ],
+      ...rows
+    ])
+    .write()
 }
 
 // Function to update labels of a pull request

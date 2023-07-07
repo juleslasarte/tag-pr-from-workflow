@@ -2,10 +2,16 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 import {components} from '@octokit/openapi-types'
 import {run, RunOpts} from '../src/run' // Replace 'your-module' with the actual module name
+import {mock} from 'node:test'
 
 // Mocking the core module
 jest.mock('@actions/core')
 const mockedCore = core as jest.Mocked<typeof core>
+
+// Mock the methods of core.summary
+mockedCore.summary.addHeading = jest.fn().mockReturnThis()
+mockedCore.summary.addTable = jest.fn().mockReturnThis()
+mockedCore.summary.write = jest.fn().mockResolvedValue(undefined)
 
 // Mocking the github module
 jest.mock('@actions/github')
